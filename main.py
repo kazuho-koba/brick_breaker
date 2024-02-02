@@ -85,7 +85,7 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-            # # Ctrl+Cが押された場合に録画を停止してビデオファイルに保存
+            # # スペースキーが押された場合に録画を停止してビデオファイルに保存
             # if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
             #     if recording:
             #         recording = False
