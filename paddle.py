@@ -7,7 +7,7 @@ class Paddle(pygame.sprite.Sprite):
         self.image = pygame.Surface([width, height])
         self.image.fill(color)
         self.rect = self.image.get_rect()
-        self.speed = 1 # パドルの移動速度
+        self.speed = 10 # パドルの移動速度
 
     def move_left(self):
         self.rect.x -= self.speed

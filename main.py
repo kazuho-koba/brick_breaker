@@ -1,7 +1,9 @@
 import pygame
+import cv2
 import sys
 from block import Block     # Blockクラスをインポート
 from paddle import Paddle   # Paddleクラスをインポート
+from ball import Ball       # Ballクラスをインポート
 
 pygame.init()
 
@@ -13,11 +15,16 @@ SCREEN_HEIGHT = 600
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
+# ゲームループのフレームレートを設定
+FPS = 30
+clock = pygame.time.Clock()
+
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("ブロック崩しゲーム")
 
 # すべてのスプライトを管理するグループを作成
 all_sprites = pygame.sprite.Group()
+blocks_group = pygame.sprite.Group()
 
 # ブロックを生成し画面の上25%に敷き詰める
 def create_blocks():
@@ -34,6 +41,7 @@ def create_blocks():
             block.rect.x = x    # ブロック位置x
             block.rect.y = y    # ブロック位置y
             all_sprites.add(block)
+            blocks_group.add(block)
 
 # パドルを生成する関数
 def create_paddle():
@@ -46,16 +54,53 @@ def create_paddle():
     all_sprites.add(paddle)
     return paddle
 
+# ボールを生成する関数
+def create_ball(color, size, init_pos_x, init_pos_y, blocks_group):
+    ball = Ball(color, size, blocks_group)
+    ball.rect.x = init_pos_x
+    ball.rect.y = init_pos_y
+    ball.speed = [5, 5]
+    all_sprites.add(ball)
+    return ball
+
+# 動画を記録する関数（今はうまく行っていない、そもそもゲームが遅くなるのでやらないほうが良さそう）
+def save_video(frames, width, height):
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter('gameplay.avi', fourcc, 30.0, (width, height))
+    for frame in frames:
+        out.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+    out.release()
+
 def main():
     running = True
+    recording = False   # 録画中かどうかを示すフラグ
+    frames = []         # フレームを格納するリスト
 
-    create_blocks()  # ブロックを生成
-    paddle = create_paddle() # パドルを生成
+    create_blocks()                 # ブロックを生成
+    paddle = create_paddle()        # パドルを生成
+    ball = create_ball(WHITE, 10, SCREEN_WIDTH//2, SCREEN_HEIGHT//2, blocks_group)   # ボールを生成
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+            # # Ctrl+Cが押された場合に録画を停止してビデオファイルに保存
+            # if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            #     if recording:
+            #         recording = False
+            #         save_video(frames, SCREEN_WIDTH, SCREEN_HEIGHT)
+            #         frames = []     # フレームリストをリセット
+            #     else:
+            #         recording = True
+
+        # Enterキーが押下されたらボールをリセット
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+            # ボールを消去
+            all_sprites.remove(ball)
+            ball.kill()
+            # ボール再生成
+            ball = create_ball(WHITE, 10, SCREEN_WIDTH//2, SCREEN_HEIGHT//2, blocks_group)
 
         # キーボード入力を処理
         keys = pygame.key.get_pressed()
@@ -68,11 +113,23 @@ def main():
             if paddle.rect.right < SCREEN_WIDTH:
                 paddle.move_right()
 
+        # ボール位置を更新
+        ball.update(paddle, SCREEN_WIDTH, SCREEN_HEIGHT)
+
         screen.fill(BLACK)
         
         # すべてのスプライトを描画
         all_sprites.draw(screen)
         pygame.display.flip()
+
+        # # 録画中の場合、ゲーム画面をキャプチャしてフレームリストに追加
+        # if recording:
+        #     frame = pygame.surfarray.array3d(screen)
+        #     frames.append(frame)
+
+        # フレームレートを制御
+        clock.tick(FPS)
+            
     pygame.quit()
     sys.exit()
 
