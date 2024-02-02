@@ -1,6 +1,7 @@
 import pygame
 import sys
-from block import Block # Blockクラスをインポート
+from block import Block     # Blockクラスをインポート
+from paddle import Paddle   # Paddleクラスをインポート
 
 pygame.init()
 
@@ -19,7 +20,7 @@ pygame.display.set_caption("ブロック崩しゲーム")
 all_sprites = pygame.sprite.Group()
 
 # ブロックを生成し画面の上25%に敷き詰める
-def creat_blocks():
+def create_blocks():
     block_width = 25
     block_height = 25
 
@@ -34,16 +35,38 @@ def creat_blocks():
             block.rect.y = y    # ブロック位置y
             all_sprites.add(block)
 
+# パドルを生成する関数
+def create_paddle():
+    paddle_width = 100
+    paddle_height = 20
+
+    paddle = Paddle(WHITE, paddle_width, paddle_height)
+    paddle.rect.x = (SCREEN_WIDTH - paddle_width)//2    # パドル位置x
+    paddle.rect.y = SCREEN_HEIGHT - paddle_height - 10  # パドル位置y
+    all_sprites.add(paddle)
+    return paddle
+
 def main():
     running = True
 
-    # ブロックを生成
-    creat_blocks()
+    create_blocks()  # ブロックを生成
+    paddle = create_paddle() # パドルを生成
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+        # キーボード入力を処理
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            # パドルの左端が画面の左端より左にいかないように制限
+            if paddle.rect.left > 0:
+                paddle.move_left()
+        if keys[pygame.K_RIGHT]:
+            # パドルの右端が画面の右端より右に行かないように制限
+            if paddle.rect.right < SCREEN_WIDTH:
+                paddle.move_right()
 
         screen.fill(BLACK)
         
